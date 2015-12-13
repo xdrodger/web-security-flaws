@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd"
+	default-lazy-init="false">
+
+	<!-- Activates scanning of @Autowired -->
+	<!-- <context:annotation-config /> -->
+	
+	<!-- 普通类取得spring管理中的bean -->
+	<!-- <bean class="cn.congine.wizarpos.mall.weChat.bussiness.SpringContextHolder" lazy-init="false" /> -->
+	<!-- 普通类取得spring管理中的bean -->
+	<bean class="org.springframework.web.client.RestTemplate" lazy-init="false" />
+	
+	<!-- Activates scanning of @Repository, @Service, @Controller and @Component -->
+	<!-- <context:component-scan base-package="pers.xdrodger.wsf" /> -->
+	<!-- Activates scanning of @Repository, @Service and @Component -->
+	<context:component-scan base-package="pers.xdrodger.wsf" > 
+		<context:exclude-filter expression="org.springframework.stereotype.Controller" type="annotation"/> 
+	</context:component-scan>	
+		
+	<!-- Enable @AspectJ support -->
+	<!-- <aop:aspectj-autoproxy /> -->
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+
+<!-- 	<context:property-placeholder
+		ignore-unresolvable="true" location="classpath*:version.properties" />
+		
+	restTemplate
+	<bean id="restTemplate" class="org.springframework.web.client.RestTemplate">
+		<property name="messageConverters">
+			<list>
+				<bean
+					class="org.springframework.http.converter.ByteArrayHttpMessageConverter" />
+				<bean
+					class="org.springframework.http.converter.xml.SourceHttpMessageConverter" />
+				<bean class="org.springframework.http.converter.FormHttpMessageConverter" />
+				<bean
+					class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter" />
+			</list>
+		</property>
+	</bean> -->
+
+	<!-- Hibernate配置 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="namingStrategy">
+			<bean class="org.hibernate.cfg.ImprovedNamingStrategy" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.jdbc.batch_size">50</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.provider_configuration_file_resource_path">ehcache/ehcache-hibernate-local.xml</prop>
+				<prop key="current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+				<!-- 测试使用，2012-9-29日后修改entity请修改src/sql/moa-update.sql文件 <prop key="hibernate.hbm2ddl.auto">update</prop> -->
+			</props>
+		</property>
+		<property name="packagesToScan">
+			<list>
+				<value>pers.xdrodger.wsf.entity</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<!-- 使用annotation定义事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager"
+		proxy-target-class="true" />
+
+	<!-- JSR303 Validator定义 -->
+<!-- 	<bean id="validator"
+		class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" /> -->
+
+	<!-- production环境 -->
+	<beans profile="production">
+		<context:property-placeholder
+			ignore-unresolvable="true" location="classpath*:ApplicationResources.properties" />
+
+		<!-- 数据源配置, 使用c3p0数据库连接池 -->
+		<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+			destroy-method="close">
+			<!-- Connection Info -->
+			<property name="driverClass" value="${jdbc.driver}" />
+			<property name="jdbcUrl" value="${jdbc.url}" />
+			<property name="user" value="${jdbc.username}" />
+			<property name="password" value="${jdbc.password}" />
+
+			<!-- Connection Pooling Info -->
+			<property name="initialPoolSize" value="${c3p0.initialPoolSize}" />
+			<property name="minPoolSize" value="${c3p0.minPoolSize}" />
+			<property name="maxPoolSize" value="${c3p0.maxPoolSize}" />
+			<property name="maxIdleTime" value="${c3p0.maxIdleTime}" />
+			<!-- 当连接池连接耗尽时，客户端调用getConnection()后等待获取新连接的时间，超时后将抛出SQLException，如设为0则无限期等待。单位毫秒。默认: 0 -->   
+			<!-- <property name="checkoutTimeout" value="3000"/>   -->
+			
+			<!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。默认值: 3 -->   
+			<!-- <property name="acquireIncrement" value="2"/>   -->
+			
+			<!--定义在从数据库获取新连接失败后重复尝试的次数。默认值: 30 ；小于等于0表示无限次-->   
+			<!-- <property name="acquireRetryAttempts" value="0"/> -->  
+			
+			<!--重新尝试的时间间隔，默认为：1000毫秒-->   
+			<!-- <property name="acquireRetryDelay" value="1000" />   -->
+			
+			<!--关闭连接时，是否提交未提交的事务，默认为false，即关闭连接，回滚未提交的事务 -->   
+			<!-- <property name="autoCommitOnClose" value="true" /> -->
+			
+			<!--c3p0将建一张名为Test的空表，并使用其自带的查询语句进行测试。如果定义了这个参数那么属性preferredTestQuery将被忽略。你不能在这张Test表上进行任何操作，它将只供c3p0测试使用。默认值: null -->   
+			<!-- <property name="automaticTestTable" value="Test" /> -->  
+			
+			<!--如果为false，则获取连接失败将会引起所有等待连接池来获取连接的线程抛出异常，但是数据源仍有效保留，并在下次调用getConnection()的时候继续尝试获取连接。如果设为true，那么在尝试获取连接失败后该数据源将申明已断开并永久关闭。默认: false-->   
+			<!-- <property name="breakAfterAcquireFailure" value="false" /> -->
+			
+			<!--每60秒检查所有连接池中的空闲连接。默认值: 0，不检查 -->   
+			<!-- <property name="idleConnectionTestPeriod" value="60" /> -->
+			<!--c3p0全局的PreparedStatements缓存的大小。如果maxStatements与maxStatementsPerConnection均为0，则缓存不生效，只要有一个不为0，则语句的缓存就能生效。如果默认值: 0-->   
+			<!-- <property name="maxStatements" value="100" /> -->
+			<!--maxStatementsPerConnection定义了连接池内单个连接所拥有的最大缓存statements数。默认值: 0 -->   
+			<!-- <property name="maxStatementsPerConnection" /> -->
+		</bean>
+
+		<!-- 数据源配置,使用应用服务器的数据库连接池 -->
+		<!--<jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/ExampleDB" 
+			/> -->
+	</beans>
+					
+	<!-- I18N for Spring Application -->
+<!-- 	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>classpath:ApplicationResources</value>
+				<value>classpath:errors</value>
+				<value>classpath:org/springframework/security/messages</value>
+			</list>
+		</property>
+		<property name="cacheSeconds" value="3600" />
+	</bean> -->
+
+<!-- 	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver" /> -->
+	
+</beans>
